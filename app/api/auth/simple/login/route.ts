@@ -117,11 +117,12 @@ export async function POST(request: NextRequest) {
 
       user = signUpResult.data.user
       session = signUpResult.data.session
+      const signUpError = signUpResult.error
       
       console.log('SignUp result:', {
         hasUser: !!user,
         hasSession: !!session,
-        error: signUpResult.error?.message,
+        error: signUpError ? (signUpError as any).message || String(signUpError) : null,
         email: email
       })
       
@@ -133,25 +134,27 @@ export async function POST(request: NextRequest) {
           email,
           password,
         })
+        const retryError = retrySignIn.error
         console.log('Retry signIn result:', {
           hasUser: !!retrySignIn.data.user,
           hasSession: !!retrySignIn.data.session,
-          error: retrySignIn.error?.message
+          error: retryError ? (retryError as any).message || String(retryError) : null
         })
         if (retrySignIn.data.user && retrySignIn.data.session) {
           user = retrySignIn.data.user
           session = retrySignIn.data.session
         } else if (!retrySignIn.data.user) {
           console.error('Failed to sign in after signUp, error:', retrySignIn.error)
+          const retryErrorMsg = retryError ? ((retryError as any).message || String(retryError)) : 'Невідома помилка'
           return NextResponse.json(
-            { error: `Помилка входу після створення: ${retrySignIn.error?.message || 'Невідома помилка'}. Перевірте налаштування Supabase.` },
+            { error: `Помилка входу після створення: ${retryErrorMsg}. Перевірте налаштування Supabase.` },
             { status: 500 }
           )
         }
       } else if (!user) {
         console.error('User is null after signUp:', {
           signUpData: signUpResult.data,
-          error: signUpResult.error
+          error: signUpError ? (signUpError as any).message || String(signUpError) : null
         })
         // Спробуємо ще раз залогінитися - можливо користувач створений, але не повернувся
         await new Promise(resolve => setTimeout(resolve, 1000))
@@ -163,8 +166,9 @@ export async function POST(request: NextRequest) {
           user = finalSignIn.data.user
           session = finalSignIn.data.session
         } else {
+          const errorMsg = signUpError ? ((signUpError as any).message || String(signUpError)) : 'Користувач не створений'
           return NextResponse.json(
-            { error: `Помилка створення користувача: ${signUpResult.error?.message || 'Користувач не створений'}. Перевірте налаштування email confirmation в Supabase.` },
+            { error: `Помилка створення користувача: ${errorMsg}. Перевірте налаштування email confirmation в Supabase.` },
             { status: 500 }
           )
         }
