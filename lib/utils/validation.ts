@@ -8,7 +8,7 @@ export const createGatheringSchema = z.object({
     message: 'Дата має бути в майбутньому',
   }),
   booking_deadline: z.date().optional(),
-  notify_telegram: z.boolean().default(false),
+  notify_telegram: z.boolean().optional(),
 })
 
 export type CreateGatheringInput = z.infer<typeof createGatheringSchema>
