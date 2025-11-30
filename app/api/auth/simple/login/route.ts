@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
     })
 
     let user = signInResult.data.user
+    let session = signInResult.data.session
 
     // Якщо користувача не існує, створюємо нового
     if (signInResult.error || !user) {
@@ -115,24 +116,30 @@ export async function POST(request: NextRequest) {
       }
 
       user = signUpResult.data.user
+      session = signUpResult.data.session
       
-      // Якщо user все ще null після signUp, це може бути проблема з email confirmation
-      if (!user) {
-        console.error('User is null after signUp, data:', signUpResult.data)
-        // Спробуємо залогінитися знову після невеликої затримки
+      // Якщо user створений, але сесії немає (через email confirmation), спробуємо залогінитися
+      if (user && !session) {
+        console.log('User created but no session, trying to sign in')
         await new Promise(resolve => setTimeout(resolve, 500))
         const retrySignIn = await supabase.auth.signInWithPassword({
           email,
           password,
         })
-        if (retrySignIn.data.user) {
+        if (retrySignIn.data.user && retrySignIn.data.session) {
           user = retrySignIn.data.user
-        } else {
+          session = retrySignIn.data.session
+        } else if (!retrySignIn.data.user) {
           return NextResponse.json(
             { error: 'Помилка створення користувача. Спробуйте інший нікнейм.' },
             { status: 500 }
           )
         }
+      } else if (!user) {
+        return NextResponse.json(
+          { error: 'Помилка створення користувача. Спробуйте інший нікнейм.' },
+          { status: 500 }
+        )
       }
     }
 
@@ -163,12 +170,29 @@ export async function POST(request: NextRequest) {
     }
 
     // Перевіряємо що сесія встановлена
-    const { data: { session } } = await supabase.auth.getSession()
+    // Якщо сесії немає, спробуємо отримати її явно
+    if (!session) {
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
+      session = currentSession
+    }
+    
+    // Якщо сесії все ще немає, спробуємо встановити її явно
+    if (!session && user) {
+      console.log('No session found, trying to set session explicitly')
+      // Спробуємо залогінитися ще раз для отримання сесії
+      const finalSignIn = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+      if (finalSignIn.data.session) {
+        session = finalSignIn.data.session
+      }
+    }
     
     if (!session) {
-      console.error('No session after login, user:', user?.id)
+      console.error('No session after login, user:', user?.id, 'email:', email)
       return NextResponse.json(
-        { error: 'Помилка створення сесії' },
+        { error: 'Помилка створення сесії. Перевірте налаштування Supabase.' },
         { status: 500 }
       )
     }
