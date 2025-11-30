@@ -17,7 +17,7 @@ export async function createGathering(data: CreateGatheringInput): Promise<
       return { error: 'Необхідна авторизація' }
     }
 
-    const { error, data: gathering } = await supabase
+    const { error, data: gathering } = await (supabase as any)
       .from('gatherings')
       .insert({
         title: data.title,
@@ -49,7 +49,7 @@ export async function getGatherings() {
   try {
     const supabase = await createClient()
     
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('gatherings')
       .select(`
         *,
@@ -77,7 +77,7 @@ export async function getGatherings() {
     }
 
     // Додаємо обчислені поля
-    const gatheringsWithDetails = data.map(gathering => ({
+    const gatheringsWithDetails = (data as any[]).map((gathering: any) => ({
       ...gathering,
       slots_count: gathering.slots?.length || 0,
       is_full: (gathering.slots?.length || 0) >= gathering.max_slots,
@@ -94,7 +94,7 @@ export async function getGatheringById(id: string) {
   try {
     const supabase = await createClient()
     
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('gatherings')
       .select(`
         *,
@@ -133,10 +133,10 @@ export async function getGatheringById(id: string) {
     }
 
     // Сортуємо слоти та чергу
-    const gathering = {
+    const gathering: any = {
       ...data,
-      slots: data.slots?.sort((a, b) => a.slot_number - b.slot_number) || [],
-      waitlist: data.waitlist?.sort((a, b) => a.position - b.position) || [],
+      slots: data.slots?.sort((a: any, b: any) => a.slot_number - b.slot_number) || [],
+      waitlist: data.waitlist?.sort((a: any, b: any) => a.position - b.position) || [],
       slots_count: data.slots?.length || 0,
       is_full: (data.slots?.length || 0) >= data.max_slots,
     }
@@ -158,7 +158,7 @@ export async function getUserGatherings() {
     }
 
     // Збори створені користувачем
-    const { data: created, error: createdError } = await supabase
+    const { data: created, error: createdError } = await (supabase as any)
       .from('gatherings')
       .select(`
         *,
@@ -169,7 +169,7 @@ export async function getUserGatherings() {
       .order('gathering_date', { ascending: false })
 
     // Збори де користувач бере участь
-    const { data: participating, error: participatingError } = await supabase
+    const { data: participating, error: participatingError } = await (supabase as any)
       .from('slots')
       .select(`
         gathering:gatherings(
@@ -190,12 +190,12 @@ export async function getUserGatherings() {
     }
 
     return {
-      created: created?.map(g => ({
+      created: (created as any[])?.map((g: any) => ({
         ...g,
         slots_count: g.slots?.length || 0,
         waitlist_count: g.waitlist?.length || 0,
       })) || [],
-      participating: participating?.map(p => ({
+      participating: (participating as any[])?.map((p: any) => ({
         ...p.gathering,
         slots_count: p.gathering.slots?.length || 0,
       })) || [],

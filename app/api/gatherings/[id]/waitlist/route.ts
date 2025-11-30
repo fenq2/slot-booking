@@ -21,7 +21,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Використовуємо RPC функцію
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .rpc('join_waitlist', {
         p_gathering_id: gatheringId,
         p_user_id: user.id,
@@ -83,7 +83,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     }
 
     // Отримуємо позицію користувача перед видаленням
-    const { data: waitlistEntry } = await supabase
+    const { data: waitlistEntry } = await (supabase as any)
       .from('waitlist')
       .select('position')
       .eq('gathering_id', gatheringId)
@@ -113,9 +113,9 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     }
 
     // Оновлюємо позиції інших людей в черзі
-    const { error: updateError } = await supabase
+    const { error: updateError } = await (supabase as any)
       .from('waitlist')
-      .update({ position: supabase.sql`position - 1` })
+      .update({ position: (supabase as any).sql`position - 1` })
       .eq('gathering_id', gatheringId)
       .gt('position', waitlistEntry.position)
 

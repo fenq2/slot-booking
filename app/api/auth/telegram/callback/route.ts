@@ -40,14 +40,16 @@ export async function POST(request: NextRequest) {
     const password = crypto.randomUUID()
 
     // Спробуємо залогінити існуючого користувача
-    let authResult = await supabase.auth.signInWithPassword({
+    const signInResult = await supabase.auth.signInWithPassword({
       email,
       password: telegramData.id.toString(),
     })
 
+    let user = signInResult.data.user
+
     // Якщо користувача не існує, створюємо нового
-    if (authResult.error) {
-      authResult = await supabase.auth.signUp({
+    if (signInResult.error) {
+      const signUpResult = await supabase.auth.signUp({
         email,
         password: telegramData.id.toString(),
         options: {
@@ -58,27 +60,34 @@ export async function POST(request: NextRequest) {
           },
         },
       })
+
+      if (signUpResult.error) {
+        console.error('Supabase auth error:', signUpResult.error)
+        return NextResponse.json(
+          { error: 'Помилка авторизації' },
+          { status: 500 }
+        )
+      }
+
+      user = signUpResult.data.user
     }
 
-    if (authResult.error) {
-      console.error('Supabase auth error:', authResult.error)
+    if (!user) {
       return NextResponse.json(
         { error: 'Помилка авторизації' },
         { status: 500 }
       )
     }
 
-    const user = authResult.data.user
-
     // Оновлюємо або створюємо профіль
     const { error: profileError } = await supabase
       .from('profiles')
       .upsert({
-        id: user!.id,
-        telegram_id: telegramData.id,
+        id: user.id,
+        telegram_id: BigInt(telegramData.id) as any,
         telegram_username: telegramData.username || null,
         display_name: getTelegramDisplayName(telegramData),
-      })
+      } as any)
 
     if (profileError) {
       console.error('Profile upsert error:', profileError)
@@ -87,7 +96,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       user: {
-        id: user!.id,
+        id: user.id,
         display_name: getTelegramDisplayName(telegramData),
         telegram_username: telegramData.username,
       },

@@ -29,8 +29,8 @@ export default async function GatheringPage({ params }: GatheringPageProps) {
 
   const date = new Date(gathering.gathering_date)
   const isFull = gathering.slots_count >= gathering.max_slots
-  const userHasSlot = gathering.slots?.some(s => s.user_id === user?.id) || false
-  const userInWaitlist = gathering.waitlist?.some(w => w.user_id === user?.id) || false
+  const userHasSlot = gathering.slots?.some((s: any) => s.user_id === user?.id) || false
+  const userInWaitlist = gathering.waitlist?.some((w: any) => w.user_id === user?.id) || false
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

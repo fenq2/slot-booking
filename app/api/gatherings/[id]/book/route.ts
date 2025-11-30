@@ -21,7 +21,7 @@ export async function POST(request: NextRequest, context: RouteContext) {
     }
 
     // Використовуємо RPC функцію для безпечного бронювання
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .rpc('book_slot', {
         p_gathering_id: gatheringId,
         p_user_id: user.id,
