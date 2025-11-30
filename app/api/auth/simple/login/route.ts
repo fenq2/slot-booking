@@ -16,6 +16,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
 
     // Створюємо email з нікнейму (підтримка кирилиці через hash)
+    // Використовуємо валідний домен, бо Supabase не приймає @guest.user
     const createEmailFromNickname = (nick: string): string => {
       // Створюємо простий hash з нікнейму
       let hash = 0
@@ -24,7 +25,8 @@ export async function POST(request: NextRequest) {
         hash = ((hash << 5) - hash) + char
         hash = hash & hash // Convert to 32bit integer
       }
-      return `guest${Math.abs(hash)}@guest.user`
+      // Використовуємо example.com як валідний домен (RFC 2606)
+      return `guest${Math.abs(hash)}@example.com`
     }
     
     const email = createEmailFromNickname(nickname.toLowerCase().trim())
