@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
 
     // Створюємо email з нікнейму (підтримка кирилиці через hash)
-    // Використовуємо валідний домен, бо Supabase не приймає @guest.user
+    // Використовуємо формат з плюсом для уникнення проблем з валідацією домену
     const createEmailFromNickname = (nick: string): string => {
       // Створюємо простий hash з нікнейму
       let hash = 0
@@ -25,11 +25,17 @@ export async function POST(request: NextRequest) {
         hash = ((hash << 5) - hash) + char
         hash = hash & hash // Convert to 32bit integer
       }
-      // Використовуємо example.com як валідний домен (RFC 2606)
-      return `guest${Math.abs(hash)}@example.com`
+      // Використовуємо формат з плюсом: user+hash@example.com
+      // Плюс дозволений в email адресах і допомагає уникнути проблем з валідацією
+      // Якщо це не спрацює, можна використати домен проекту Supabase
+      const projectUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+      const domain = projectUrl.includes('supabase.co') 
+        ? 'supabase.co' 
+        : 'example.com'
+      return `guest+${Math.abs(hash)}@${domain}`
     }
     
-    const email = createEmailFromNickname(nickname.toLowerCase().trim())
+    let email = createEmailFromNickname(nickname.toLowerCase().trim())
     const password = 'guest-password-123' // Фіксований пароль для всіх гостей
 
     // Спробуємо залогінити існуючого користувача
@@ -42,20 +48,48 @@ export async function POST(request: NextRequest) {
 
     // Якщо користувача не існує, створюємо нового
     if (signInResult.error || !user) {
-      const signUpResult = await supabase.auth.signUp({
+      // Спробуємо створити користувача через signUp
+      let signUpResult = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             display_name: nickname.trim(),
           },
+          emailRedirectTo: undefined, // Не потрібен redirect для guest користувачів
         },
       })
+
+      // Якщо помилка з email валідацією, спробуємо інший формат
+      if (signUpResult.error && signUpResult.error.message.includes('invalid')) {
+        console.log('Email validation failed, trying alternative format')
+        // Створюємо альтернативний email з простішим форматом
+        let altHash = 0
+        for (let i = 0; i < nickname.length; i++) {
+          const char = nickname.charCodeAt(i)
+          altHash = ((altHash << 5) - altHash) + char
+          altHash = altHash & altHash
+        }
+        const altEmail = `guest${Math.abs(altHash)}@test.local`
+        signUpResult = await supabase.auth.signUp({
+          email: altEmail,
+          password,
+          options: {
+            data: {
+              display_name: nickname.trim(),
+            },
+            emailRedirectTo: undefined,
+          },
+        })
+        if (!signUpResult.error) {
+          email = altEmail // Оновлюємо email для подальшого використання
+        }
+      }
 
       if (signUpResult.error) {
         console.error('Supabase auth signUp error:', signUpResult.error)
         return NextResponse.json(
-          { error: `Помилка входу: ${signUpResult.error.message}` },
+          { error: `Помилка входу: ${signUpResult.error.message}. Спробуйте інший нікнейм.` },
           { status: 500 }
         )
       }
