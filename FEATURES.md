@@ -3,9 +3,9 @@
 ## ✅ MVP (v1) - Реалізовано
 
 ### Авторизація
-- ✅ Telegram Login Widget
+- ✅ Проста авторизація через нікнейм
 - ✅ Автоматичне створення профілю
-- ✅ Синхронізація з Supabase Auth
+- ✅ Збереження в Supabase Auth
 - ✅ Protected routes через middleware
 
 ### Збори (Gatherings)
@@ -201,10 +201,11 @@
 - FOR UPDATE блокування на рівні БД
 - Неможливо обійти через frontend
 
-**Чому Telegram Login Widget?**
-- Найпростіша auth для MVP
-- Цільова аудиторія вже в Telegram
-- Не потрібен email/password flow
+**Чому проста авторизація через нікнейм?**
+- Максимально простий onboarding
+- Не потрібен email/password
+- Не потрібен зовнішній сервіс
+- Ідеально для швидкого тестування MVP
 
 ### Lessons Learned
 

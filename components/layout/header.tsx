@@ -40,7 +40,7 @@ export function Header() {
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="text-2xl font-bold text-primary">
-            Slot Booking
+            Fastcup Сборы
           </Link>
 
           <nav className="flex items-center gap-4">
@@ -48,22 +48,25 @@ export function Header() {
               <>
                 {user ? (
                   <>
-                    <Link href="/">
-                      <Button variant="ghost">Збори</Button>
-                    </Link>
-                    <Link href="/create">
-                      <Button variant="ghost">Створити</Button>
-                    </Link>
-                    <Link href="/my">
-                      <Button variant="ghost">Мої</Button>
-                    </Link>
+                    
+                    <div className="flex items-center gap-2">
+                      <Link href="/">
+                        <Button variant="ghost">Список активных сборов</Button>
+                      </Link>
+                    
+                      <Link href="/my">
+                        <Button variant="ghost">Мои сборы</Button>
+                      </Link>
+                    </div>
+                    
+                    <span className="text-sm text-gray-500">{user?.email}</span>
                     <Button variant="outline" onClick={handleLogout}>
-                      Вийти
+                       Выйти
                     </Button>
                   </>
                 ) : (
                   <Link href="/login">
-                    <Button>Увійти</Button>
+                    <Button>Вход</Button>
                   </Link>
                 )}
               </>

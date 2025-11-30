@@ -41,29 +41,16 @@ service_role key: eyJhbGc...
 npm run supabase:status
 ```
 
-## Крок 3: Налаштування Telegram Bot
+## Крок 3: Налаштування Telegram Bot (опційно)
 
-### 3.1. Створіть бота
+⚠️ **Цей крок опційний!** Telegram бот потрібен тільки для уведомлень у групу.
+
+Якщо хочете уведомлення в Telegram:
 
 1. Напишіть [@BotFather](https://t.me/BotFather) в Telegram
 2. Відправте команду `/newbot`
 3. Слідуйте інструкціям для створення бота
 4. Збережіть токен, який ви отримаєте (формат: `1234567890:ABCdefGHIjklMNOpqrsTUVwxyz`)
-
-### 3.2. Налаштуйте бота для логіну
-
-1. Відправте `/setdomain` в BotFather
-2. Виберіть вашого бота
-3. Введіть домен: `localhost` (для локальної розробки)
-
-### 3.3. Отримайте Bot Username
-
-Ваш bot username буде у форматі `@your_bot_name_bot` (без @)
-
-### 3.4. Отримайте Bot ID
-
-Bot ID - це числа на початку токена (до двокрапки).
-Наприклад, якщо токен `1234567890:ABC...`, то ID = `1234567890`
 
 ## Крок 4: Налаштування Environment змінних
 
@@ -75,16 +62,14 @@ NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key-from-supabase
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-from-supabase
 
-# Telegram Bot (отримали на кроці 3)
+# Telegram Bot (опційно, для уведомлень)
 TELEGRAM_BOT_TOKEN=your-bot-token-here
-TELEGRAM_BOT_USERNAME=your_bot_username
-NEXT_PUBLIC_TELEGRAM_BOT_ID=your-bot-id
-
-# App
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-**Важливо:** Замініть всі `your-*` значення на реальні!
+**Важливо:** 
+- Замініть `your-anon-key-from-supabase` та `your-service-role-key-from-supabase` на реальні ключі з кроку 2.3
+- `TELEGRAM_BOT_TOKEN` можна не вказувати якщо не потрібні уведомлення
 
 ## Крок 5: Запуск додатку
 
@@ -99,8 +84,8 @@ npm run dev
 ### 6.1. Авторизація
 
 1. Відкрийте http://localhost:3000/login
-2. Натисніть на кнопку "Login with Telegram"
-3. Авторизуйтесь через Telegram
+2. Введіть будь-який нікнейм (наприклад, "Player1")
+3. Натисніть "Увійти"
 
 ### 6.2. Створення збору
 

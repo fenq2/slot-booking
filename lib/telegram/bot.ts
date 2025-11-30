@@ -149,12 +149,12 @@ ${participantsList}
     gatheringUrl: string
   }): Promise<boolean> {
     const text = `
-🎉 <b>Місце звільнилось!</b>
+🎉 <b>Место освободилось!</b>
 
-Збір: "${params.title}"
+Сбор: "${params.title}"
 
-Ти був в черзі і тепер автоматично отримав місце!
-Не забудь підтвердити свою участь.
+Ты был в очереди и теперь автоматически получил место!
+Не забудь подтвердить свою участие.
     `.trim()
 
     return this.sendMessage({
@@ -165,11 +165,79 @@ ${participantsList}
         inline_keyboard: [
           [
             {
-              text: '👀 Переглянути збір',
+              text: '👀 Посмотреть сбор',
               url: params.gatheringUrl,
             },
           ],
         ],
+      },
+    })
+  }
+
+  async sendActiveGatheringsList(params: {
+    chatId: number | string
+    gatherings: Array<{
+      id: string
+      title: string
+      gathering_date: string
+      slots_count: number
+      max_slots: number
+      creator?: { display_name?: string; telegram_username?: string }
+    }>
+    baseUrl: string
+  }): Promise<boolean> {
+    if (params.gatherings.length === 0) {
+      const text = `
+📭 <b>Активних зборів немає</b>
+
+На даний момент немає активних зборів. Створи новий збір на сайті!
+      `.trim()
+
+      return this.sendMessage({
+        chat_id: params.chatId,
+        text,
+        parse_mode: 'HTML',
+      })
+    }
+
+    const text = `
+🎮 <b>Активні збори (${params.gatherings.length})</b>
+
+${params.gatherings.map((gathering, index) => {
+      const date = new Date(gathering.gathering_date)
+      const dateStr = date.toLocaleDateString('uk-UA', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+      const isFull = gathering.slots_count >= gathering.max_slots
+      const creatorName = gathering.creator?.display_name || 'Невідомий'
+      
+      return `
+${index + 1}. <b>${gathering.title}</b>
+   📅 ${dateStr}
+   👥 ${gathering.slots_count}/${gathering.max_slots} ${isFull ? '✅ Заповнено' : 'місць'}
+   👤 Організатор: ${creatorName}
+      `
+    }).join('\n')}
+    `.trim()
+
+    // Створюємо кнопки для кожного збору
+    const inlineKeyboard = params.gatherings.map((gathering) => [
+      {
+        text: `🔗 ${gathering.title.substring(0, 30)}${gathering.title.length > 30 ? '...' : ''}`,
+        url: `${params.baseUrl}/?gathering=${gathering.id}`,
+      },
+    ])
+
+    return this.sendMessage({
+      chat_id: params.chatId,
+      text,
+      parse_mode: 'HTML',
+      reply_markup: {
+        inline_keyboard: inlineKeyboard,
       },
     })
   }

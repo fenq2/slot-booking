@@ -21,11 +21,11 @@ export default function CreateGatheringPage() {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<CreateGatheringInput>({
+  } = useForm({
     resolver: zodResolver(createGatheringSchema),
     defaultValues: {
-      max_slots: 10,
-      notify_telegram: false,
+      max_slots: 5,
+      notify_telegram: true,
     },
   })
 
@@ -47,7 +47,8 @@ export default function CreateGatheringPage() {
       if (result.error) {
         setError(result.error)
       } else if (result.gathering) {
-        router.push(`/gathering/${result.gathering.id}`)
+        router.push('/')
+        router.refresh()
       }
     } catch (err) {
       setError('Помилка створення збору')
@@ -61,9 +62,9 @@ export default function CreateGatheringPage() {
     <div className="max-w-2xl mx-auto">
       <Card>
         <CardHeader>
-          <CardTitle className="text-3xl">Створити збір</CardTitle>
+          <CardTitle className="text-2xl">Новый сбор</CardTitle>
           <CardDescription>
-            Заповніть форму щоб створити новий збір
+            Новый сбор - новое поражение!
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -75,10 +76,10 @@ export default function CreateGatheringPage() {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="title">Назва збору *</Label>
+              <Label htmlFor="title">Название сбора *</Label>
               <Input
                 id="title"
-                placeholder="Доту катаєм"
+                placeholder="Не знающие побед"
                 {...register('title')}
               />
               {errors.title && (
@@ -86,22 +87,10 @@ export default function CreateGatheringPage() {
               )}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Опис (необов'язково)</Label>
-              <Textarea
-                id="description"
-                placeholder="Додаткова інформація про збір..."
-                rows={4}
-                {...register('description')}
-              />
-              {errors.description && (
-                <p className="text-sm text-red-600">{errors.description.message}</p>
-              )}
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="gathering_date">Дата та час *</Label>
+                <Label htmlFor="gathering_date">Дата и время *</Label>
                 <Input
                   id="gathering_date"
                   type="datetime-local"
@@ -113,7 +102,7 @@ export default function CreateGatheringPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="max_slots">Кількість місць *</Label>
+                <Label htmlFor="max_slots">Количество мест *</Label>
                 <Input
                   id="max_slots"
                   type="number"
@@ -127,19 +116,6 @@ export default function CreateGatheringPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="booking_deadline">
-                Дедлайн бронювання (необов'язково)
-              </Label>
-              <Input
-                id="booking_deadline"
-                type="datetime-local"
-                {...register('booking_deadline')}
-              />
-              <p className="text-xs text-muted-foreground">
-                Після цього часу неможливо буде забронювати місце
-              </p>
-            </div>
 
             <div className="flex items-center space-x-2">
               <input
@@ -149,7 +125,7 @@ export default function CreateGatheringPage() {
                 {...register('notify_telegram')}
               />
               <Label htmlFor="notify_telegram" className="cursor-pointer">
-                Відправити уведомлення в Telegram
+                Отправить уведомление в Telegram
               </Label>
             </div>
 
@@ -159,7 +135,7 @@ export default function CreateGatheringPage() {
                 className="flex-1"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Створення...' : 'Створити збір'}
+                {isSubmitting ? 'Создание...' : 'Создать сбор'}
               </Button>
               <Button
                 type="button"
@@ -167,7 +143,7 @@ export default function CreateGatheringPage() {
                 onClick={() => router.back()}
                 disabled={isSubmitting}
               >
-                Скасувати
+                Отмена
               </Button>
             </div>
           </form>

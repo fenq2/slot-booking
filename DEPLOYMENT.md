@@ -12,14 +12,9 @@
    - anon (public) key
    - service_role key
 
-### 2. Telegram Bot для Production
+### 2. Telegram Bot для Production (опційно)
 
-1. В BotFather налаштуйте домен вашого production сайту
-   ```
-   /setdomain
-   Виберіть бота
-   Введіть: yourdomain.com
-   ```
+Якщо хочете уведомлення в Telegram групу, створіть бота через [@BotFather](https://t.me/BotFather).
 
 ### 3. Vercel
 
@@ -30,16 +25,14 @@
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
    SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-   TELEGRAM_BOT_TOKEN=your-bot-token
-   TELEGRAM_BOT_USERNAME=your_bot_username
-   NEXT_PUBLIC_TELEGRAM_BOT_ID=your-bot-id
+   TELEGRAM_BOT_TOKEN=your-bot-token (опційно)
    NEXT_PUBLIC_APP_URL=https://yourdomain.vercel.app
    ```
 4. Deploy!
 
-### 4. Налаштування Telegram Webhook
+### 4. Налаштування Telegram Webhook (якщо використовуєте бот)
 
-Після деплою налаштуйте webhook:
+Якщо додали `TELEGRAM_BOT_TOKEN`, налаштуйте webhook:
 
 ```bash
 curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook" \

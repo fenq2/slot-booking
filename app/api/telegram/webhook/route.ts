@@ -1,33 +1,76 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { telegramBot } from '@/lib/telegram/bot'
+import { getActiveGatheringsForBot } from '@/lib/actions/gatherings'
 
 // Webhook для отримання повідомлень від Telegram бота
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
-    // Тут можна обробляти команди бота
-    // Наприклад: /new, /list, /my
-    
-    console.log('Telegram webhook:', body)
+    // Перевіряємо що це повідомлення
+    if (!body.message) {
+      return NextResponse.json({ ok: true })
+    }
 
-    // TODO: Реалізувати обробку команд бота
-    // if (body.message?.text?.startsWith('/')) {
-    //   const command = body.message.text.split(' ')[0]
-    //   switch (command) {
-    //     case '/start':
-    //       // Відправити привітання
-    //       break
-    //     case '/new':
-    //       // Створити новий збір
-    //       break
-    //     case '/list':
-    //       // Показати список сборів
-    //       break
-    //     case '/my':
-    //       // Показати мої брони
-    //       break
-    //   }
-    // }
+    const message = body.message
+    const chatId = message.chat.id
+    const text = message.text
+    const chatType = message.chat.type // 'private', 'group', 'supergroup'
+
+    // Обробляємо команди
+    if (text?.startsWith('/')) {
+      const command = text.split(' ')[0].toLowerCase()
+
+      switch (command) {
+        case '/start':
+        case '/help': {
+          const helpText = `
+🎮 <b>Ласкаво просимо до FastCup Booking Bot!</b>
+
+<b>Доступні команди:</b>
+/list або /active - Показати активні збори
+/help - Показати цю довідку
+
+Бот працює в особистих чатах та групах. Додай бота в групу, щоб отримувати сповіщення про нові збори!
+          `.trim()
+
+          await telegramBot.sendMessage({
+            chat_id: chatId,
+            text: helpText,
+            parse_mode: 'HTML',
+          })
+          break
+        }
+
+        case '/list':
+        case '/active': {
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://fastcup-booking.vercel.app'
+          const { gatherings, error } = await getActiveGatheringsForBot()
+
+          if (error) {
+            await telegramBot.sendMessage({
+              chat_id: chatId,
+              text: `❌ Помилка: ${error}`,
+            })
+            break
+          }
+
+          await telegramBot.sendActiveGatheringsList({
+            chatId,
+            gatherings: gatherings || [],
+            baseUrl,
+          })
+          break
+        }
+
+        default: {
+          await telegramBot.sendMessage({
+            chat_id: chatId,
+            text: '❓ Невідома команда. Використай /help для списку команд.',
+          })
+        }
+      }
+    }
 
     return NextResponse.json({ ok: true })
   } catch (error) {

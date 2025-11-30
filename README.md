@@ -6,8 +6,8 @@
 
 - **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui
 - **Database**: Supabase (PostgreSQL)
-- **Auth**: Telegram Login Widget
-- **Notifications**: Telegram Bot API
+- **Auth**: Simple nickname-based authentication
+- **Notifications**: Telegram Bot API (опційно)
 
 ## Локальний запуск
 
@@ -33,7 +33,9 @@ supabase start
 
 Після запуску скопіюйте API URL та anon key в `.env.local`.
 
-### 3. Налаштування Telegram Bot
+### 3. Налаштування Telegram Bot (опційно)
+
+Якщо хочете уведомлення в Telegram:
 
 1. Створіть бота через [@BotFather](https://t.me/BotFather)
 2. Отримайте токен бота
@@ -47,9 +49,9 @@ supabase start
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Опційно для Telegram уведомлень
 TELEGRAM_BOT_TOKEN=your-bot-token
-TELEGRAM_BOT_USERNAME=your-bot-username
-NEXT_PUBLIC_TELEGRAM_BOT_ID=your-bot-id
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
@@ -88,7 +90,7 @@ npm run dev
 - ✅ Створення збору
 - ✅ Бронювання слотів
 - ✅ Черга очікування
-- ✅ Telegram авторизація
+- ✅ Проста авторизація через нікнейм
 - ✅ Telegram уведомлення
 - ✅ Realtime оновлення
 - ✅ Захист від race conditions

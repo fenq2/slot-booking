@@ -2,10 +2,10 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { CreateGatheringInput } from '@/lib/utils/validation'
+import { CreateGatheringData } from '@/lib/utils/validation'
 import { Gathering } from '@/lib/supabase/types'
 
-export async function createGathering(data: CreateGatheringInput): Promise<
+export async function createGathering(data: CreateGatheringData): Promise<
   | { error: string; success?: never; gathering?: never }
   | { success: true; gathering: Gathering; error?: never }
 > {
@@ -60,6 +60,8 @@ export async function getGatherings() {
         ),
         slots(
           id,
+          slot_number,
+          user_id,
           user:profiles!slots_user_id_fkey(
             id,
             display_name,
@@ -79,6 +81,7 @@ export async function getGatherings() {
     // Додаємо обчислені поля
     const gatheringsWithDetails = (data as any[]).map((gathering: any) => ({
       ...gathering,
+      slots: gathering.slots?.sort((a: any, b: any) => a.slot_number - b.slot_number) || [],
       slots_count: gathering.slots?.length || 0,
       is_full: (gathering.slots?.length || 0) >= gathering.max_slots,
     }))
@@ -162,8 +165,30 @@ export async function getUserGatherings() {
       .from('gatherings')
       .select(`
         *,
-        slots(id),
-        waitlist(id)
+        creator:profiles!gatherings_creator_id_fkey(
+          id,
+          display_name,
+          telegram_username
+        ),
+        slots(
+          id,
+          slot_number,
+          user_id,
+          user:profiles!slots_user_id_fkey(
+            id,
+            display_name,
+            telegram_username
+          )
+        ),
+        waitlist(
+          id,
+          position,
+          user:profiles!waitlist_user_id_fkey(
+            id,
+            display_name,
+            telegram_username
+          )
+        )
       `)
       .eq('creator_id', user.id)
       .order('gathering_date', { ascending: false })
@@ -179,7 +204,16 @@ export async function getUserGatherings() {
             display_name,
             telegram_username
           ),
-          slots(id)
+          slots(
+            id,
+            slot_number,
+            user_id,
+            user:profiles!slots_user_id_fkey(
+              id,
+              display_name,
+              telegram_username
+            )
+          )
         )
       `)
       .eq('user_id', user.id)
@@ -192,16 +226,117 @@ export async function getUserGatherings() {
     return {
       created: (created as any[])?.map((g: any) => ({
         ...g,
+        slots: g.slots?.sort((a: any, b: any) => a.slot_number - b.slot_number) || [],
+        waitlist: g.waitlist?.sort((a: any, b: any) => a.position - b.position) || [],
         slots_count: g.slots?.length || 0,
         waitlist_count: g.waitlist?.length || 0,
       })) || [],
       participating: (participating as any[])?.map((p: any) => ({
         ...p.gathering,
+        slots: p.gathering.slots?.sort((a: any, b: any) => a.slot_number - b.slot_number) || [],
         slots_count: p.gathering.slots?.length || 0,
       })) || [],
     }
   } catch (error) {
     console.error('Get user gatherings error:', error)
+    return { error: 'Помилка сервера' }
+  }
+}
+
+export async function deleteGathering(gatheringId: string): Promise<
+  | { error: string; success?: never }
+  | { success: true; error?: never }
+> {
+  try {
+    const supabase = await createClient()
+    
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return { error: 'Необхідна авторизація' }
+    }
+
+    // Перевіряємо що користувач є створювачем
+    const { data: gathering } = await (supabase as any)
+      .from('gatherings')
+      .select('creator_id')
+      .eq('id', gatheringId)
+      .single()
+
+    if (!gathering) {
+      return { error: 'Збір не знайдено' }
+    }
+
+    if (gathering.creator_id !== user.id) {
+      return { error: 'Тільки створювач може видалити збір' }
+    }
+
+    // Видаляємо збір (слоти та waitlist видаляться автоматично через CASCADE)
+    const { error } = await (supabase as any)
+      .from('gatherings')
+      .delete()
+      .eq('id', gatheringId)
+
+    if (error) {
+      console.error('Delete gathering error:', error)
+      return { error: 'Помилка видалення збору' }
+    }
+
+    revalidatePath('/')
+    revalidatePath('/my')
+    return { success: true }
+  } catch (error) {
+    console.error('Delete gathering error:', error)
+    return { error: 'Помилка сервера' }
+  }
+}
+
+// Функція для отримання активних зборів без авторизації (для Telegram бота)
+export async function getActiveGatheringsForBot() {
+  try {
+    const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
+    const { Database } = await import('@/lib/supabase/types')
+    
+    const supabase = createSupabaseClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    )
+    
+    const { data, error } = await (supabase as any)
+      .from('gatherings')
+      .select(`
+        id,
+        title,
+        gathering_date,
+        max_slots,
+        creator:profiles!gatherings_creator_id_fkey(
+          display_name,
+          telegram_username
+        ),
+        slots(id)
+      `)
+      .eq('status', 'open')
+      .gte('gathering_date', new Date().toISOString())
+      .order('gathering_date', { ascending: true })
+      .limit(10)
+
+    if (error) {
+      console.error('Get active gatherings for bot error:', error)
+      return { error: 'Помилка завантаження сборів' }
+    }
+
+    // Обчислюємо кількість зайнятих місць
+    const gatheringsWithDetails = (data as any[]).map((gathering: any) => ({
+      id: gathering.id,
+      title: gathering.title,
+      gathering_date: gathering.gathering_date,
+      max_slots: gathering.max_slots,
+      slots_count: gathering.slots?.length || 0,
+      creator: gathering.creator,
+    }))
+
+    return { gatherings: gatheringsWithDetails }
+  } catch (error) {
+    console.error('Get active gatherings for bot error:', error)
     return { error: 'Помилка сервера' }
   }
 }

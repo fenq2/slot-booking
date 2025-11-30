@@ -10,6 +10,9 @@ CREATE TABLE profiles (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Index для швидкого пошуку за display_name
+CREATE INDEX idx_profiles_display_name ON profiles(display_name);
+
 -- Gatherings table (збори)
 CREATE TABLE gatherings (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
