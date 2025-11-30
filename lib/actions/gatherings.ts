@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { CreateGatheringData } from '@/lib/utils/validation'
-import { Gathering } from '@/lib/supabase/types'
+import { Gathering, Database } from '@/lib/supabase/types'
 
 export async function createGathering(data: CreateGatheringData): Promise<
   | { error: string; success?: never; gathering?: never }
@@ -294,7 +294,6 @@ export async function deleteGathering(gatheringId: string): Promise<
 export async function getActiveGatheringsForBot() {
   try {
     const { createClient: createSupabaseClient } = await import('@supabase/supabase-js')
-    const { Database } = await import('@/lib/supabase/types')
     
     const supabase = createSupabaseClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
