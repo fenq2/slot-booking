@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
         case '/list':
         case '/active': {
-          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://fastcup-booking.vercel.app'
+          const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://slot-booking-ruddy.vercel.app/'
           const { gatherings, error } = await getActiveGatheringsForBot()
 
           if (error) {

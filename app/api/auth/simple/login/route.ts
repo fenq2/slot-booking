@@ -118,28 +118,56 @@ export async function POST(request: NextRequest) {
       user = signUpResult.data.user
       session = signUpResult.data.session
       
+      console.log('SignUp result:', {
+        hasUser: !!user,
+        hasSession: !!session,
+        error: signUpResult.error?.message,
+        email: email
+      })
+      
       // Якщо user створений, але сесії немає (через email confirmation), спробуємо залогінитися
       if (user && !session) {
         console.log('User created but no session, trying to sign in')
-        await new Promise(resolve => setTimeout(resolve, 500))
+        await new Promise(resolve => setTimeout(resolve, 1000))
         const retrySignIn = await supabase.auth.signInWithPassword({
           email,
           password,
+        })
+        console.log('Retry signIn result:', {
+          hasUser: !!retrySignIn.data.user,
+          hasSession: !!retrySignIn.data.session,
+          error: retrySignIn.error?.message
         })
         if (retrySignIn.data.user && retrySignIn.data.session) {
           user = retrySignIn.data.user
           session = retrySignIn.data.session
         } else if (!retrySignIn.data.user) {
+          console.error('Failed to sign in after signUp, error:', retrySignIn.error)
           return NextResponse.json(
-            { error: 'Помилка створення користувача. Спробуйте інший нікнейм.' },
+            { error: `Помилка входу після створення: ${retrySignIn.error?.message || 'Невідома помилка'}. Перевірте налаштування Supabase.` },
             { status: 500 }
           )
         }
       } else if (!user) {
-        return NextResponse.json(
-          { error: 'Помилка створення користувача. Спробуйте інший нікнейм.' },
-          { status: 500 }
-        )
+        console.error('User is null after signUp:', {
+          signUpData: signUpResult.data,
+          error: signUpResult.error
+        })
+        // Спробуємо ще раз залогінитися - можливо користувач створений, але не повернувся
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        const finalSignIn = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (finalSignIn.data.user) {
+          user = finalSignIn.data.user
+          session = finalSignIn.data.session
+        } else {
+          return NextResponse.json(
+            { error: `Помилка створення користувача: ${signUpResult.error?.message || 'Користувач не створений'}. Перевірте налаштування email confirmation в Supabase.` },
+            { status: 500 }
+          )
+        }
       }
     }
 
