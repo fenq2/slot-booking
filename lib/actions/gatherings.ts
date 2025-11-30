@@ -3,8 +3,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { CreateGatheringInput } from '@/lib/utils/validation'
+import { Gathering } from '@/lib/supabase/types'
 
-export async function createGathering(data: CreateGatheringInput) {
+export async function createGathering(data: CreateGatheringInput): Promise<
+  | { error: string; success?: never; gathering?: never }
+  | { success: true; gathering: Gathering; error?: never }
+> {
   try {
     const supabase = await createClient()
     
