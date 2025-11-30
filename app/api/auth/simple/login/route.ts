@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     let user = signInResult.data.user
 
     // Якщо користувача не існує, створюємо нового
-    if (signInResult.error) {
+    if (signInResult.error || !user) {
       const signUpResult = await supabase.auth.signUp({
         email,
         password,
@@ -51,14 +51,33 @@ export async function POST(request: NextRequest) {
       })
 
       if (signUpResult.error) {
-        console.error('Supabase auth error:', signUpResult.error)
+        console.error('Supabase auth signUp error:', signUpResult.error)
         return NextResponse.json(
-          { error: 'Помилка входу' },
+          { error: `Помилка входу: ${signUpResult.error.message}` },
           { status: 500 }
         )
       }
 
       user = signUpResult.data.user
+      
+      // Якщо user все ще null після signUp, це може бути проблема з email confirmation
+      if (!user) {
+        console.error('User is null after signUp, data:', signUpResult.data)
+        // Спробуємо залогінитися знову після невеликої затримки
+        await new Promise(resolve => setTimeout(resolve, 500))
+        const retrySignIn = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        })
+        if (retrySignIn.data.user) {
+          user = retrySignIn.data.user
+        } else {
+          return NextResponse.json(
+            { error: 'Помилка створення користувача. Спробуйте інший нікнейм.' },
+            { status: 500 }
+          )
+        }
+      }
     }
 
     if (!user) {
@@ -76,10 +95,15 @@ export async function POST(request: NextRequest) {
         telegram_id: null,
         telegram_username: null,
         display_name: nickname.trim(),
-      } as any)
+        created_at: new Date().toISOString(),
+      } as any, {
+        onConflict: 'id',
+      })
 
     if (profileError) {
       console.error('Profile upsert error:', profileError)
+      // Не повертаємо помилку, бо користувач вже залогінений
+      // Профіль може бути створений пізніше через trigger або вручну
     }
 
     return NextResponse.json({

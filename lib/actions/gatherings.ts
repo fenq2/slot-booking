@@ -75,6 +75,7 @@ export async function getGatherings() {
 
     if (error) {
       console.error('Get gatherings error:', error)
+      console.error('Error details:', JSON.stringify(error, null, 2))
       return { error: 'Помилка завантаження сборів' }
     }
 

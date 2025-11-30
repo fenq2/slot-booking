@@ -31,7 +31,13 @@ export class TelegramBot {
       })
 
       const data = await response.json()
-      return data.ok
+      
+      if (!data.ok) {
+        console.error('Telegram API error:', data)
+        return false
+      }
+      
+      return true
     } catch (error) {
       console.error('Telegram send message error:', error)
       return false

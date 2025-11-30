@@ -7,8 +7,17 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     
+    // Логування для діагностики
+    console.log('Telegram webhook received:', JSON.stringify(body, null, 2))
+    
+    // Перевірка webhook від Telegram (опційно)
+    if (body.update_id) {
+      console.log('Update ID:', body.update_id)
+    }
+    
     // Перевіряємо що це повідомлення
     if (!body.message) {
+      console.log('No message in body, returning ok')
       return NextResponse.json({ ok: true })
     }
 
@@ -16,6 +25,8 @@ export async function POST(request: NextRequest) {
     const chatId = message.chat.id
     const text = message.text
     const chatType = message.chat.type // 'private', 'group', 'supergroup'
+
+    console.log('Processing message:', { chatId, text, chatType })
 
     // Обробляємо команди
     if (text?.startsWith('/')) {
@@ -34,11 +45,13 @@ export async function POST(request: NextRequest) {
 Бот працює в особистих чатах та групах. Додай бота в групу, щоб отримувати сповіщення про нові збори!
           `.trim()
 
-          await telegramBot.sendMessage({
+          console.log('Sending help message to chat:', chatId)
+          const result = await telegramBot.sendMessage({
             chat_id: chatId,
             text: helpText,
             parse_mode: 'HTML',
           })
+          console.log('Help message sent, result:', result)
           break
         }
 
