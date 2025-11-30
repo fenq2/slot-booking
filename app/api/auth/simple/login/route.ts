@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createServerClient } from '@supabase/ssr'
+import { Database } from '@/lib/supabase/types'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,7 +14,26 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const supabase = await createClient()
+    // Створюємо Supabase client для API route з правильним обробником cookies
+    const response = new NextResponse()
+    
+    const supabase = createServerClient<Database>(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              request.cookies.set(name, value)
+              response.cookies.set(name, value, options)
+            })
+          },
+        },
+      }
+    )
 
     // Створюємо email з нікнейму (підтримка кирилиці через hash)
     // Використовуємо формат з плюсом для уникнення проблем з валідацією домену
@@ -142,13 +162,32 @@ export async function POST(request: NextRequest) {
       // Профіль може бути створений пізніше через trigger або вручну
     }
 
-    return NextResponse.json({
+    // Перевіряємо що сесія встановлена
+    const { data: { session } } = await supabase.auth.getSession()
+    
+    if (!session) {
+      console.error('No session after login, user:', user?.id)
+      return NextResponse.json(
+        { error: 'Помилка створення сесії' },
+        { status: 500 }
+      )
+    }
+
+    // Створюємо JSON response з cookies (cookies вже встановлені через setAll в supabase client)
+    const jsonResponse = NextResponse.json({
       success: true,
       user: {
         id: user.id,
         display_name: nickname.trim(),
       },
     })
+
+    // Копіюємо всі cookies з response (які встановлені Supabase через setAll)
+    response.cookies.getAll().forEach((cookie) => {
+      jsonResponse.cookies.set(cookie.name, cookie.value)
+    })
+
+    return jsonResponse
   } catch (error) {
     console.error('Login error:', error)
     return NextResponse.json(
