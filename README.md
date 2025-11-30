@@ -1,36 +1,98 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Slot Booking MVP
 
-## Getting Started
+Веб-додаток для організації сборів на ігри з фіксованою кількістю слотів.
 
-First, run the development server:
+## Технології
+
+- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui
+- **Database**: Supabase (PostgreSQL)
+- **Auth**: Telegram Login Widget
+- **Notifications**: Telegram Bot API
+
+## Локальний запуск
+
+### 1. Встановлення залежностей
+
+```bash
+npm install
+```
+
+### 2. Налаштування Supabase
+
+Встановіть Supabase CLI:
+
+```bash
+npm install -g supabase
+```
+
+Запустіть локальний Supabase:
+
+```bash
+supabase start
+```
+
+Після запуску скопіюйте API URL та anon key в `.env.local`.
+
+### 3. Налаштування Telegram Bot
+
+1. Створіть бота через [@BotFather](https://t.me/BotFather)
+2. Отримайте токен бота
+3. Додайте токен в `.env.local`
+
+### 4. Environment змінні
+
+Створіть файл `.env.local` (див. `.env.example`):
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+TELEGRAM_BOT_TOKEN=your-bot-token
+TELEGRAM_BOT_USERNAME=your-bot-username
+NEXT_PUBLIC_TELEGRAM_BOT_ID=your-bot-id
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### 5. Запуск проекту
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Відкрийте [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Структура проекту
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+/app
+  /(auth)              # Авторизація
+  /(dashboard)         # Основні сторінки
+  /api                 # API routes
+/lib
+  /supabase           # Supabase клієнти
+  /telegram           # Telegram бот
+  /actions            # Server actions
+  /utils              # Утиліти
+/components
+  /ui                 # shadcn компоненти
+  /gathering          # Компоненти сборів
+  /layout             # Layout компоненти
+/supabase
+  /migrations         # Міграції БД
+```
 
-## Learn More
+## Функціонал
 
-To learn more about Next.js, take a look at the following resources:
+### MVP (v1)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- ✅ Створення збору
+- ✅ Бронювання слотів
+- ✅ Черга очікування
+- ✅ Telegram авторизація
+- ✅ Telegram уведомлення
+- ✅ Realtime оновлення
+- ✅ Захист від race conditions
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Ліцензія
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
